@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+
+{% block title %}Reports & Analytics - PM SHRI JNV GB NAGAR{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-file-earmark-text"></i> Reports & Analytics</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Reports</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card gradient-card-primary">
+                <div class="card-body text-center text-white">
+                    <i class="bi bi-people fs-1"></i>
+                    <h3 id="report-students" class="mt-2">0</h3>
+                    <p class="mb-0">Total Students</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card gradient-card-success">
+                <div class="card-body text-center text-white">
+                    <i class="bi bi-building fs-1"></i>
+                    <h3 id="report-rooms" class="mt-2">0</h3>
+                    <p class="mb-0">Exam Rooms</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card gradient-card-info">
+                <div class="card-body text-center text-white">
+                    <i class="bi bi-grid-3x3 fs-1"></i>
+                    <h3 id="report-capacity" class="mt-2">0</h3>
+                    <p class="mb-0">Total Capacity</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card gradient-card-warning">
+                <div class="card-body text-center text-white">
+                    <i class="bi bi-percent fs-1"></i>
+                    <h3 id="report-utilization" class="mt-2">0%</h3>
+                    <p class="mb-0">Utilization</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Section -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <!-- Student Distribution -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Student Distribution by Class</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Class</th>
+                                    <th>Total Students</th>
+                                    <th>Male</th>
+                                    <th>Female</th>
+                                    <th>Gender Ratio</th>
+                                </tr>
+                            </thead>
+                            <tbody id="classDistributionTable">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">No data available</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room Configuration -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-building"></i> Room Configuration Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Room ID</th>
+                                    <th>Layout</th>
+                                    <th>Base Capacity</th>
+                                    <th>Extra Desks</th>
+                                    <th>Total Capacity</th>
+                                    <th>Efficiency</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roomAnalysisTable">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">No rooms configured</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seating Plan Status -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-check"></i> Last Seating Plan Status</h5>
+                </div>
+                <div class="card-body" id="seatingPlanStatus">
+                    <div class="text-center text-muted">
+                        <i class="bi bi-info-circle fs-3"></i>
+                        <p class="mt-2">No seating plan generated yet</p>
+                        <a href="{{ url_for('generate_seating_page') }}" class="btn btn-primary">
+                            <i class="bi bi-magic"></i> Generate Seating Plan
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <!-- Export Options -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-download"></i> Export Reports</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" onclick="exportStudentReport()">
+                            <i class="bi bi-file-excel"></i> Student List Report
+                        </button>
+                        <button class="btn btn-outline-success" onclick="exportRoomReport()">
+                            <i class="bi bi-file-excel"></i> Room Configuration Report
+                        </button>
+                        <button class="btn btn-outline-info" onclick="exportSeatingReport()">
+                            <i class="bi bi-file-pdf"></i> Seating Arrangement Report
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="exportSummaryReport()">
+                            <i class="bi bi-file-earmark-pdf"></i> Executive Summary
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-activity"></i> System Health</h6>
+                </div>
+                <div class="card-body">
+                    <div class="health-indicator mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Data Integrity</span>
+                            <span class="badge bg-success" id="dataIntegrity">Good</span>
+                        </div>
+                    </div>
+                    <div class="health-indicator mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Room Utilization</span>
+                            <span class="badge bg-info" id="roomUtilization">Optimal</span>
+                        </div>
+                    </div>
+                    <div class="health-indicator">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Anti-Cheating Rules</span>
+                            <span class="badge bg-warning" id="antiCheatingStatus">Active</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-graph-up"></i> Quick Statistics</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <h6 id="avgStudentsPerClass">0</h6>
+                            <small class="text-muted">Avg per Class</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h6 id="avgRoomCapacity">0</h6>
+                            <small class="text-muted">Avg Room Size</small>
+                        </div>
+                        <div class="col-6">
+                            <h6 id="genderBalance">0%</h6>
+                            <small class="text-muted">Gender Balance</small>
+                        </div>
+                        <div class="col-6">
+                            <h6 id="spareCapacity">0</h6>
+                            <small class="text-muted">Spare Seats</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let studentsData = [];
+let roomsData = [];
+let seatingData = {};
+
+// Load all data for reports
+function loadReportData() {
+    Promise.all([
+        fetch('{{ url_for("get_student_data") }}').then(r => r.json()),
+        fetch('{{ url_for("get_rooms_data") }}').then(r => r.json()),
+        fetch('{{ url_for("get_seating_status") }}').then(r => r.json()).catch(() => ({}))
+    ]).then(([students, rooms, seating]) => {
+        studentsData = students;
+        roomsData = rooms;
+        seatingData = seating;
+        
+        updateOverviewStats();
+        updateClassDistribution();
+        updateRoomAnalysis();
+        updateSeatingStatus();
+        updateQuickStats();
+    }).catch(error => {
+        console.error('Error loading report data:', error);
+    });
+}
+
+// Update overview statistics cards
+function updateOverviewStats() {
+    const totalStudents = studentsData.length;
+    const totalRooms = roomsData.length;
+    const totalCapacity = roomsData.reduce((sum, room) => sum + room.capacity, 0);
+    const utilization = totalCapacity > 0 ? Math.round((totalStudents / totalCapacity) * 100) : 0;
+    
+    document.getElementById('report-students').textContent = totalStudents;
+    document.getElementById('report-rooms').textContent = totalRooms;
+    document.getElementById('report-capacity').textContent = totalCapacity;
+    document.getElementById('report-utilization').textContent = utilization + '%';
+}
+
+// Update class distribution table
+function updateClassDistribution() {
+    const tbody = document.getElementById('classDistributionTable');
+    
+    if (studentsData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No student data available</td></tr>';
+        return;
+    }
+    
+    const classStats = {};
+    studentsData.forEach(student => {
+        const cls = student.class || student['Class'] || 'Unknown';
+        const gender = (student.gender || student['Gender'] || 'unknown').toLowerCase();
+        
+        if (!classStats[cls]) {
+            classStats[cls] = { total: 0, male: 0, female: 0 };
+        }
+        
+        classStats[cls].total++;
+        if (gender === 'male') classStats[cls].male++;
+        if (gender === 'female') classStats[cls].female++;
+    });
+    
+    tbody.innerHTML = Object.entries(classStats)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([cls, stats]) => {
+            const ratio = stats.total > 0 ? 
+                `${Math.round((stats.male / stats.total) * 100)}% M / ${Math.round((stats.female / stats.total) * 100)}% F` : 
+                'N/A';
+            
+            return `
+                <tr>
+                    <td><span class="badge bg-primary">${cls}</span></td>
+                    <td><strong>${stats.total}</strong></td>
+                    <td><span class="badge bg-info">${stats.male}</span></td>
+                    <td><span class="badge bg-warning">${stats.female}</span></td>
+                    <td><small class="text-muted">${ratio}</small></td>
+                </tr>
+            `;
+        }).join('');
+}
+
+// Update room analysis table
+function updateRoomAnalysis() {
+    const tbody = document.getElementById('roomAnalysisTable');
+    
+    if (roomsData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No rooms configured</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = roomsData.map(room => {
+        const efficiency = room.base_capacity > 0 ? 
+            Math.round((room.base_capacity / room.capacity) * 100) : 0;
+        
+        return `
+            <tr>
+                <td><strong>${room.room_id}</strong></td>
+                <td><code>${room.rows}×${room.columns}</code></td>
+                <td>${room.base_capacity}</td>
+                <td>+${room.extra_desks * 2}</td>
+                <td><strong>${room.capacity}</strong></td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-${efficiency >= 80 ? 'success' : efficiency >= 60 ? 'warning' : 'danger'}" 
+                             style="width: ${efficiency}%">${efficiency}%</div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Update seating plan status
+function updateSeatingStatus() {
+    const statusDiv = document.getElementById('seatingPlanStatus');
+    
+    if (seatingData.seating_plan) {
+        const assignedCount = Object.values(seatingData.seating_plan)
+            .reduce((total, room) => {
+                return total + Object.values(room)
+                    .reduce((roomTotal, desk) => {
+                        const seats = [desk.seat_a, desk.seat_b].filter(s => s !== null);
+                        return roomTotal + seats.length;
+                    }, 0);
+            }, 0);
+        
+        const unassignedCount = seatingData.unassigned_students?.length || 0;
+        
+        statusDiv.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="text-center">
+                        <h4 class="text-success">${assignedCount}</h4>
+                        <p class="text-muted">Students Assigned</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-center">
+                        <h4 class="text-${unassignedCount > 0 ? 'warning' : 'success'}">${unassignedCount}</h4>
+                        <p class="text-muted">Unassigned</p>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-3">
+                <a href="{{ url_for('preview') }}" class="btn btn-primary">
+                    <i class="bi bi-eye"></i> View Seating Plan
+                </a>
+                <a href="{{ url_for('generate_seating_page') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise"></i> Regenerate
+                </a>
+            </div>
+        `;
+    }
+}
+
+// Update quick statistics
+function updateQuickStats() {
+    const classes = [...new Set(studentsData.map(s => s.class || s['Class']))];
+    const avgPerClass = classes.length > 0 ? Math.round(studentsData.length / classes.length) : 0;
+    
+    const avgRoomCap = roomsData.length > 0 ? 
+        Math.round(roomsData.reduce((sum, r) => sum + r.capacity, 0) / roomsData.length) : 0;
+    
+    const maleCount = studentsData.filter(s => (s.gender || s['Gender'] || '').toLowerCase() === 'male').length;
+    const genderBal = studentsData.length > 0 ? Math.round((maleCount / studentsData.length) * 100) : 0;
+    
+    const totalCapacity = roomsData.reduce((sum, room) => sum + room.capacity, 0);
+    const spareSeats = totalCapacity - studentsData.length;
+    
+    document.getElementById('avgStudentsPerClass').textContent = avgPerClass;
+    document.getElementById('avgRoomCapacity').textContent = avgRoomCap;
+    document.getElementById('genderBalance').textContent = genderBal + '%';
+    document.getElementById('spareCapacity').textContent = Math.max(0, spareSeats);
+}
+
+// Export functions (placeholders)
+function exportStudentReport() {
+    if (studentsData.length === 0) {
+        alert('No student data to export');
+        return;
+    }
+    alert('Student report export functionality to be implemented');
+}
+
+function exportRoomReport() {
+    if (roomsData.length === 0) {
+        alert('No room data to export');
+        return;
+    }
+    alert('Room report export functionality to be implemented');
+}
+
+function exportSeatingReport() {
+    if (!seatingData.seating_plan) {
+        alert('No seating plan available. Generate one first.');
+        return;
+    }
+    alert('Seating report export functionality to be implemented');
+}
+
+function exportSummaryReport() {
+    alert('Executive summary export functionality to be implemented');
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    loadReportData();
+    setInterval(loadReportData, 60000); // Refresh every minute
+});
+</script>
+{% endblock %}

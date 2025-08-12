@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Seating - PM SHRI JNV GB NAGAR{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-magic"></i> Generate Seating Arrangement</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Generate Seating</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prerequisites Check -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-check-circle"></i> Prerequisites</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-people fs-4 text-{{ 'success' if student_count > 0 else 'danger' }} me-3"></i>
+                                <div>
+                                    <h6 class="mb-0">Student Data</h6>
+                                    <small class="text-muted">{{ student_count }} students loaded</small>
+                                </div>
+                                {% if student_count == 0 %}
+                                <a href="{{ url_for('students') }}" class="btn btn-sm btn-outline-primary ms-auto">
+                                    Add Students
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-building fs-4 text-{{ 'success' if room_count > 0 else 'danger' }} me-3"></i>
+                                <div>
+                                    <h6 class="mb-0">Room Configuration</h6>
+                                    <small class="text-muted">{{ room_count }} rooms configured</small>
+                                </div>
+                                {% if room_count == 0 %}
+                                <a href="{{ url_for('rooms') }}" class="btn btn-sm btn-outline-primary ms-auto">
+                                    Add Rooms
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generation Form -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-gear"></i> Seating Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('generate_seating') }}" method="post" id="generateForm">
+                        <div class="row mb-4">
+                            <div class="col-lg-6">
+                                <label class="form-label">Select Classes (Optional)</label>
+                                <div class="border rounded p-3 max-height-200" style="max-height: 200px; overflow-y: auto;">
+                                    {% if classes %}
+                                        {% for class in classes %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="class_{{ class }}" name="selected_classes" value="{{ class }}">
+                                            <label class="form-check-label" for="class_{{ class }}">
+                                                Class {{ class }}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="text-muted">No classes available</div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-text">Leave empty to include all classes</div>
+                            </div>
+                            <div class="col-lg-6">
+                                <label class="form-label">Seating Options</label>
+                                <div class="border rounded p-3">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="boy_girl_pairing" name="boy_girl_pairing">
+                                        <label class="form-check-label" for="boy_girl_pairing">
+                                            <i class="bi bi-people"></i> Boy-Girl Pairing
+                                        </label>
+                                        <div class="form-text small">Pair one boy and one girl per desk when possible</div>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="gender_separation" name="gender_separation">
+                                        <label class="form-check-label" for="gender_separation">
+                                            <i class="bi bi-shield-check"></i> Gender Separation
+                                        </label>
+                                        <div class="form-text small">Ensure same gender sits together at each desk for safety</div>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="random_assignment" name="random_assignment" checked>
+                                        <label class="form-check-label" for="random_assignment">
+                                            <i class="bi bi-shuffle"></i> Random Assignment
+                                        </label>
+                                        <div class="form-text small">Randomly shuffle students before assignment</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <h6><i class="bi bi-shield-exclamation"></i> Anti-Cheating Rules</h6>
+                            <ul class="mb-0 small">
+                                <li>Students from the same class cannot sit on the same desk</li>
+                                <li>Students from the same class cannot sit on adjacent desks</li>
+                                <li>If boy-girl pairing is enabled, same gender students won't share a desk</li>
+                                <li>If gender separation is enabled, different gender students won't share a desk</li>
+                                <li>Seats may be left empty if rules cannot be satisfied</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-lg btn-primary" id="generateBtn" {{ 'disabled' if student_count == 0 or room_count == 0 }}>
+                                <i class="bi bi-magic"></i> Generate Seating Plan
+                            </button>
+                            {% if student_count == 0 or room_count == 0 %}
+                            <div class="text-muted small mt-2">Please add students and configure rooms before generating</div>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <!-- Generation History -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-clock-history"></i> Recent Generations</h6>
+                </div>
+                <div class="card-body">
+                    <div id="generationHistory">
+                        <div class="text-muted small">No recent generations</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('students') }}" class="btn btn-outline-primary">
+                            <i class="bi bi-people"></i> Manage Students
+                        </a>
+                        <a href="{{ url_for('rooms') }}" class="btn btn-outline-success">
+                            <i class="bi bi-building"></i> Manage Rooms
+                        </a>
+                        <a href="{{ url_for('preview') }}" class="btn btn-outline-info">
+                            <i class="bi bi-eye"></i> View Results
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generation Tips -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb"></i> Pro Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0">
+                        <li>Use Gender Separation for safety in mixed classes</li>
+                        <li>Boy-Girl Pairing helps prevent gender-based cheating</li>
+                        <li>Random Assignment reduces predictability</li>
+                        <li>Leave some seats empty for better compliance</li>
+                        <li>Generate multiple times for different arrangements</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Handle mutually exclusive gender options
+document.addEventListener('DOMContentLoaded', function() {
+    const boyGirlPairing = document.getElementById('boy_girl_pairing');
+    const genderSeparation = document.getElementById('gender_separation');
+    
+    if (boyGirlPairing && genderSeparation) {
+        boyGirlPairing.addEventListener('change', function() {
+            if (this.checked) {
+                genderSeparation.checked = false;
+            }
+        });
+        
+        genderSeparation.addEventListener('change', function() {
+            if (this.checked) {
+                boyGirlPairing.checked = false;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

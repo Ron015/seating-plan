@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Add Room - PM SHRI JNV GB NAGAR{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-building-add"></i> Add New Exam Room</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('rooms') }}">Rooms</a></li>
+                        <li class="breadcrumb-item active">Add Room</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-building"></i> Room Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('add_room') }}" method="post" id="addRoomForm">
+                        <div class="row">
+                            <div class="col-md-12 mb-4">
+                                <label for="room_id" class="form-label">Room ID <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="room_id" name="room_id" required placeholder="e.g., EXAM-HALL-A">
+                                <div class="form-text">Unique identifier for the examination room</div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="rows" class="form-label">Number of Rows <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="rows" name="rows" min="1" max="20" required placeholder="6" oninput="calculateCapacity()">
+                                <div class="form-text">Rows of desks in the room</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="columns" class="form-label">Number of Columns <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="columns" name="columns" min="1" max="20" required placeholder="8" oninput="calculateCapacity()">
+                                <div class="form-text">Columns of desks in the room</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="extra_desks" class="form-label">Extra Desks</label>
+                                <input type="number" class="form-control" id="extra_desks" name="extra_desks" min="0" max="50" value="0" placeholder="2" oninput="calculateCapacity()">
+                                <div class="form-text">Additional single desks</div>
+                            </div>
+                        </div>
+
+                        <!-- Capacity Display -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6><i class="bi bi-calculator"></i> Capacity Calculation</h6>
+                                        <div class="row text-center">
+                                            <div class="col-md-3">
+                                                <h5 id="baseDesks" class="text-primary">0</h5>
+                                                <small class="text-muted">Base Desks</small>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <h5 id="baseCapacity" class="text-success">0</h5>
+                                                <small class="text-muted">Base Capacity</small>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <h5 id="extraCapacity" class="text-info">+0</h5>
+                                                <small class="text-muted">Extra Seats</small>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <h5 id="totalCapacity" class="text-warning">0</h5>
+                                                <small class="text-muted">Total Capacity</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h6><i class="bi bi-info-circle"></i> Room Layout Guidelines</h6>
+                            <ul class="mb-0 small">
+                                <li>Each desk seats 2 students (side by side)</li>
+                                <li>Standard grid layout: rows × columns of desks</li>
+                                <li>Extra desks are single-student desks for flexibility</li>
+                                <li>Consider room size and accessibility when planning</li>
+                                <li>Leave adequate space between rows for supervision</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('rooms') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Rooms
+                            </a>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary me-2" onclick="previewRoom()">
+                                    <i class="bi bi-eye"></i> Preview Layout
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-building-add"></i> Add Room
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-template-fill"></i> Quick Templates</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="applyTemplate(6, 8, 2, 'Small Hall')">
+                            Small Hall (6×8 +2)
+                            <br><small class="text-muted">100 students</small>
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="applyTemplate(8, 10, 0, 'Medium Hall')">
+                            Medium Hall (8×10)
+                            <br><small class="text-muted">160 students</small>
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="applyTemplate(10, 12, 5, 'Large Hall')">
+                            Large Hall (10×12 +5)
+                            <br><small class="text-muted">250 students</small>
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm" onclick="applyTemplate(4, 6, 8, 'Lab Setup')">
+                            Computer Lab (4×6 +8)
+                            <br><small class="text-muted">64 students</small>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb"></i> Planning Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0">
+                        <li><strong>Room Naming:</strong> Use clear, descriptive IDs (EXAM-HALL-A, LIBRARY-01)</li>
+                        <li><strong>Optimal Size:</strong> 6-10 rows work best for supervision</li>
+                        <li><strong>Extra Desks:</strong> Add flexibility for uneven class sizes</li>
+                        <li><strong>Accessibility:</strong> Leave space for wheelchairs and movement</li>
+                        <li><strong>Visibility:</strong> Ensure clear sightlines for monitoring</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-collection"></i> Recent Rooms</h6>
+                </div>
+                <div class="card-body" id="recentRooms">
+                    <div class="text-muted small">Loading recent additions...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function calculateCapacity() {
+    const rows = parseInt(document.getElementById('rows').value) || 0;
+    const columns = parseInt(document.getElementById('columns').value) || 0;
+    const extraDesks = parseInt(document.getElementById('extra_desks').value) || 0;
+    
+    const baseDesks = rows * columns;
+    const baseCapacity = baseDesks * 2;
+    const extraCapacity = extraDesks * 2;
+    const totalCapacity = baseCapacity + extraCapacity;
+    
+    document.getElementById('baseDesks').textContent = baseDesks;
+    document.getElementById('baseCapacity').textContent = baseCapacity;
+    document.getElementById('extraCapacity').textContent = '+' + extraCapacity;
+    document.getElementById('totalCapacity').textContent = totalCapacity;
+}
+
+function applyTemplate(rows, columns, extraDesks, templateName) {
+    document.getElementById('rows').value = rows;
+    document.getElementById('columns').value = columns;
+    document.getElementById('extra_desks').value = extraDesks;
+    
+    // Auto-generate room ID if empty
+    const roomIdField = document.getElementById('room_id');
+    if (!roomIdField.value) {
+        const timestamp = Date.now().toString().substr(-4);
+        roomIdField.value = templateName.replace(' ', '-').toUpperCase() + '-' + timestamp;
+    }
+    
+    calculateCapacity();
+}
+
+function previewRoom() {
+    const form = document.getElementById('addRoomForm');
+    const formData = new FormData(form);
+    
+    const preview = {
+        room_id: formData.get('room_id'),
+        rows: formData.get('rows'),
+        columns: formData.get('columns'),
+        extra_desks: formData.get('extra_desks')
+    };
+    
+    if (!preview.room_id || !preview.rows || !preview.columns) {
+        alert('Please fill all required fields to preview');
+        return;
+    }
+    
+    const baseCapacity = preview.rows * preview.columns * 2;
+    const totalCapacity = baseCapacity + (preview.extra_desks * 2);
+    
+    const previewText = `
+Room Layout Preview:
+- Room ID: ${preview.room_id}
+- Grid Layout: ${preview.rows} rows × ${preview.columns} columns
+- Base Desks: ${preview.rows * preview.columns} (${baseCapacity} students)
+- Extra Desks: ${preview.extra_desks} (${preview.extra_desks * 2} students)
+- Total Capacity: ${totalCapacity} students
+
+Layout Pattern:
+${'□ '.repeat(parseInt(preview.columns))}
+${'(Repeated for ' + preview.rows + ' rows)'}
+    `;
+    
+    alert(previewText);
+}
+
+// Load recent rooms
+fetch('{{ url_for("get_rooms_data") }}')
+    .then(response => response.json())
+    .then(rooms => {
+        const recentContainer = document.getElementById('recentRooms');
+        if (rooms.length > 0) {
+            const recent = rooms.slice(-3).reverse();
+            recentContainer.innerHTML = recent.map(room => `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <strong>${room.room_id}</strong><br>
+                        <small class="text-muted">${room.rows}×${room.columns} +${room.extra_desks}</small>
+                    </div>
+                    <span class="badge bg-primary">${room.capacity}</span>
+                </div>
+            `).join('');
+        } else {
+            recentContainer.innerHTML = '<div class="text-muted small">No rooms added yet</div>';
+        }
+    })
+    .catch(error => {
+        document.getElementById('recentRooms').innerHTML = '<div class="text-muted small">Error loading data</div>';
+    });
+
+// Initialize capacity calculation
+document.addEventListener('DOMContentLoaded', function() {
+    calculateCapacity();
+});
+</script>
+{% endblock %}

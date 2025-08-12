@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}Seating Preview - Exam Seating Generator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-eye"></i> Seating Plan Preview</h1>
+            <div>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if seating_plan %}
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-building fs-2 text-primary"></i>
+                <h4 class="mt-2">{{ seating_plan|length }}</h4>
+                <p class="text-muted mb-0">Rooms</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-table fs-2 text-success"></i>
+                <h4 class="mt-2">{{ total_desks }}</h4>
+                <p class="text-muted mb-0">Total Desks</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-people fs-2 text-info"></i>
+                <h4 class="mt-2">{{ assigned_students }}</h4>
+                <p class="text-muted mb-0">Assigned</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-person-x fs-2 text-warning"></i>
+                <h4 class="mt-2">{{ unassigned|length }}</h4>
+                <p class="text-muted mb-0">Unassigned</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Room-wise Seating Plans -->
+{% for room_id, room_seating in seating_plan.items() %}
+{% set room_info = rooms|selectattr('room_id', 'equalto', room_id)|first %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-building"></i> {{ room_id }}
+                    <small class="text-muted">
+                        ({{ room_info.rows if room_info else 'N/A' }}×{{ room_info.columns if room_info else 'N/A' }}{% if room_info and room_info.extra_desks > 0 %} + {{ room_info.extra_desks }} extra{% endif %})
+                    </small>
+                </h5>
+                <div>
+                    <a href="{{ url_for('export_room', room_id=room_id) }}" class="btn btn-success btn-sm">
+                        <i class="bi bi-download"></i> Export Excel
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Grid View -->
+                <div class="seating-grid mb-4" style="display: grid; grid-template-columns: repeat({{ room_info.columns if room_info else 5 }}, 1fr); gap: 10px; max-width: 100%; overflow-x: auto;">
+                    {% for desk_id, desk in room_seating.items()|sort(attribute='1.row,1.col') %}
+                    <div class="desk-card border rounded p-2 text-center position-relative" style="min-height: 100px; background-color: var(--bs-secondary-bg);">
+                        <div class="desk-header small text-muted mb-2">{{ desk_id }}</div>
+                        
+                        <!-- Seat A -->
+                        <div class="seat mb-1 p-1 rounded {% if desk.seat_a %}bg-success text-white{% else %}bg-light text-muted{% endif %}" style="font-size: 0.75rem;">
+                            {% if desk.seat_a %}
+                                <strong>{{ desk.seat_a.roll_number }}</strong><br>
+                                <span>{{ desk.seat_a.name[:15] }}{% if desk.seat_a.name|length > 15 %}...{% endif %}</span><br>
+                                <small>({{ desk.seat_a.class }} {{ desk.seat_a.section }} {{ desk.seat_a.gender[0] }})</small>
+                            {% else %}
+                                Empty
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Seat B -->
+                        <div class="seat p-1 rounded {% if desk.seat_b %}bg-success text-white{% else %}bg-light text-muted{% endif %}" style="font-size: 0.75rem;">
+                            {% if desk.seat_b %}
+                                <strong>{{ desk.seat_b.roll_number }}</strong><br>
+                                <span>{{ desk.seat_b.name[:15] }}{% if desk.seat_b.name|length > 15 %}...{% endif %}</span><br>
+                                <small>({{ desk.seat_b.class }} {{ desk.seat_b.section }} {{ desk.seat_b.gender[0] }})</small>
+                            {% else %}
+                                Empty
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Table View Toggle -->
+                <button class="btn btn-outline-secondary btn-sm mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#table-{{ room_id }}" aria-expanded="false">
+                    <i class="bi bi-table"></i> Show Table View
+                </button>
+                
+                <!-- Table View -->
+                <div class="collapse" id="table-{{ room_id }}">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Desk Number</th>
+                                    <th>Seat A</th>
+                                    <th>Seat B</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for desk_id, desk in room_seating.items()|sort(attribute='1.row,1.col') %}
+                                <tr>
+                                    <td><strong>{{ desk_id }}</strong></td>
+                                    <td>
+                                        {% if desk.seat_a %}
+                                            {{ desk.seat_a.roll_number }} - {{ desk.seat_a.name }}<br>
+                                            <small class="text-muted">({{ desk.seat_a.class }} {{ desk.seat_a.section }} {{ desk.seat_a.gender }})</small>
+                                        {% else %}
+                                            <span class="text-muted">Empty</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if desk.seat_b %}
+                                            {{ desk.seat_b.roll_number }} - {{ desk.seat_b.name }}<br>
+                                            <small class="text-muted">({{ desk.seat_b.class }} {{ desk.seat_b.section }} {{ desk.seat_b.gender }})</small>
+                                        {% else %}
+                                            <span class="text-muted">Empty</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if desk.seat_a and desk.seat_b %}
+                                            <span class="badge bg-success">Full</span>
+                                        {% elif desk.seat_a or desk.seat_b %}
+                                            <span class="badge bg-warning">Half</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Empty</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Unassigned Students -->
+{% if unassigned %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> Unassigned Students ({{ unassigned|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for student in unassigned %}
+                    <div class="col-md-6 col-lg-4 mb-2">
+                        <div class="alert alert-warning mb-2 py-2">
+                            <strong>{{ student.roll_number }}</strong> - {{ student.name }}<br>
+                            <small>({{ student.class }} {{ student.section }} {{ student.gender }})</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Why are students unassigned?</strong>
+                    These students could not be placed without violating anti-cheating rules. 
+                    Consider adding more rooms or adjusting class distributions.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Legend -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Legend</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Seat Status Colors:</h6>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="bg-success text-white px-3 py-1 rounded me-2">Occupied</div>
+                            <span>Student assigned</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="bg-light text-muted px-3 py-1 rounded me-2">Empty</div>
+                            <span>No student assigned</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Desk Status Badges:</h6>
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-success me-2">Full</span>
+                            <span>Both seats occupied</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-warning me-2">Half</span>
+                            <span>One seat occupied</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-secondary me-2">Empty</span>
+                            <span>No seats occupied</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- No Seating Plan -->
+<div class="row">
+    <div class="col-12 text-center">
+        <div class="card">
+            <div class="card-body py-5">
+                <i class="bi bi-clipboard-x fs-1 text-muted mb-3"></i>
+                <h4>No Seating Plan Available</h4>
+                <p class="text-muted mb-4">Generate a seating plan first to view the preview.</p>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">
+                    <i class="bi bi-arrow-left"></i> Go to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Calculate summary statistics
+document.addEventListener('DOMContentLoaded', function() {
+    // Count total desks and assigned students
+    let totalDesks = 0;
+    let assignedStudents = 0;
+    
+    document.querySelectorAll('.desk-card').forEach(function(desk) {
+        totalDesks++;
+        const seats = desk.querySelectorAll('.seat.bg-success');
+        assignedStudents += seats.length;
+    });
+    
+    // Update summary cards if they exist
+    const totalDesksEl = document.querySelector('.card-body h4');
+    if (totalDesksEl && totalDesksEl.textContent === '{{ total_desks }}') {
+        totalDesksEl.textContent = totalDesks;
+    }
+    
+    const assignedEl = document.querySelectorAll('.card-body h4')[2];
+    if (assignedEl && assignedEl.textContent === '{{ assigned_students }}') {
+        assignedEl.textContent = assignedStudents;
+    }
+});
+</script>
+{% endblock %}

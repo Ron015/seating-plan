@@ -1,0 +1,8 @@
+flask
+psycopg2-binary
+werkzeug
+flask-sqlalchemy
+pandas
+gunicorn
+faker
+openpyxl

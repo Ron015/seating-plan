@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - PM SHRI JNV GB NAGAR{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-gradient" style="background: linear-gradient(135deg, var(--bs-primary), var(--bs-info));">
+            <div class="card-body text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="mb-1"><i class="bi bi-mortarboard-fill"></i> PM SHRI JNV GB NAGAR</h2>
+                        <p class="mb-0 opacity-75">Intelligent Exam Seating Arrangement System</p>
+                    </div>
+                    <div class="text-end">
+                        <div class="badge bg-light text-dark px-3 py-2 fs-6">
+                            <i class="bi bi-shield-check"></i> Anti-Cheating Enabled
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Data Section -->
+<div id="students" class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-upload"></i> Upload Student Data</h5>
+                <small class="badge bg-light text-dark">Excel (.xlsx, .xls)</small>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('upload_students') }}" method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Excel File</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".xlsx,.xls" required>
+                        <div class="form-text">
+                            Expected columns: Roll Number, Name, Class, Section, Gender
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload"></i> Upload
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person-plus"></i> Add Student Manually</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('add_manual_student') }}" method="post">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="roll_number" class="form-label">Roll Number</label>
+                            <input type="text" class="form-control" id="roll_number" name="roll_number" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="class_name" class="form-label">Class</label>
+                            <input type="text" class="form-control" id="class_name" name="class_name" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="section" class="form-label">Section</label>
+                            <input type="text" class="form-control" id="section" name="section" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="gender" class="form-label">Gender</label>
+                            <select class="form-select" id="gender" name="gender" required>
+                                <option value="">Select...</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-person-plus"></i> Add Student
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Room Configuration Section -->
+<div id="rooms" class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-building"></i> Add Examination Room</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('add_room') }}" method="post">
+                    <div class="mb-3">
+                        <label for="room_id" class="form-label">Room ID</label>
+                        <input type="text" class="form-control" id="room_id" name="room_id" placeholder="e.g., Room-101" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="rows" class="form-label">Rows</label>
+                            <input type="number" class="form-control" id="rows" name="rows" min="1" max="20" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="columns" class="form-label">Columns</label>
+                            <input type="number" class="form-control" id="columns" name="columns" min="1" max="20" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="extra_desks" class="form-label">Extra Desks</label>
+                            <input type="number" class="form-control" id="extra_desks" name="extra_desks" min="0" max="10" value="0">
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <div class="small">
+                            <strong>Grid Desks:</strong> <span id="grid-capacity">0</span> students (rows × columns × 2)<br>
+                            <strong>Extra Desks:</strong> <span id="extra-capacity">0</span> students<br>
+                            <strong>Total Capacity:</strong> <span id="total-capacity">0</span> students
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-building"></i> Add Room
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-list-ul"></i> Current Data Summary</h5>
+            </div>
+            <div class="card-body">
+                <div id="data-summary">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border rounded p-3 mb-2">
+                                <i class="bi bi-people fs-2 text-primary"></i>
+                                <div class="mt-2">
+                                    <strong id="student-count">0</strong>
+                                    <div class="small text-muted">Students</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-3 mb-2">
+                                <i class="bi bi-building fs-2 text-success"></i>
+                                <div class="mt-2">
+                                    <strong id="room-count">0</strong>
+                                    <div class="small text-muted">Rooms</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="small text-muted mb-2">Classes Available:</div>
+                        <div id="class-list" class="small mb-3"></div>
+                        
+                        <div class="text-center">
+                            <form method="POST" action="{{ url_for('load_sample_data') }}" class="d-inline">
+                                <button type="submit" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-lightning"></i> Quick Start: Load JNV Sample Data
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Seating Generation Section -->
+<div id="generate" class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-magic"></i> Generate Seating Arrangement</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('generate_seating') }}" method="post" id="generateForm">
+                    <div class="row mb-3">
+                        <div class="col-lg-6">
+                            <label class="form-label">Select Classes (Optional)</label>
+                            <div id="class-checkboxes" class="border rounded p-3 max-height-200">
+                                <div class="text-muted">No classes available. Please add students first.</div>
+                            </div>
+                            <div class="form-text">Leave empty to include all classes</div>
+                        </div>
+                        <div class="col-lg-6">
+                            <label class="form-label">Anti-Cheating Options</label>
+                            <div class="border rounded p-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="boy_girl_pairing" name="boy_girl_pairing">
+                                    <label class="form-check-label" for="boy_girl_pairing">
+                                        <i class="bi bi-people"></i> Boy-Girl Pairing
+                                    </label>
+                                    <div class="form-text small">Pair one boy and one girl per desk when possible</div>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="gender_separation" name="gender_separation">
+                                    <label class="form-check-label" for="gender_separation">
+                                        <i class="bi bi-shield-check"></i> Gender Separation
+                                    </label>
+                                    <div class="form-text small">Ensure same gender sits together at each desk for safety</div>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="random_assignment" name="random_assignment" checked>
+                                    <label class="form-check-label" for="random_assignment">
+                                        <i class="bi bi-shuffle"></i> Random Assignment
+                                    </label>
+                                    <div class="form-text small">Randomly shuffle students before assignment</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <h6><i class="bi bi-shield-exclamation"></i> Anti-Cheating Rules</h6>
+                        <ul class="mb-0 small">
+                            <li>Students from the same class cannot sit on the same desk</li>
+                            <li>Students from the same class cannot sit on adjacent desks</li>
+                            <li>If boy-girl pairing is enabled, same gender students won't share a desk</li>
+                            <li>If gender separation is enabled, different gender students won't share a desk</li>
+                            <li>Seats may be left empty if rules cannot be satisfied</li>
+                        </ul>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-lg btn-primary" id="generateBtn" disabled>
+                        <i class="bi bi-magic"></i> Generate Seating Plan
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Information -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> System Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div id="student-details" class="mb-3">
+                            <strong>Student Data Status:</strong>
+                            <div class="text-muted">No students loaded</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div id="room-details" class="mb-3">
+                            <strong>Room Configuration Status:</strong>
+                            <div class="text-muted">No rooms configured</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Update data summary and form validation
+function updateDataSummary() {
+    fetch('{{ url_for("get_student_data") }}')
+        .then(response => response.json())
+        .then(students => {
+            document.getElementById('student-count').textContent = students.length;
+            
+            // Update class list
+            const classes = [...new Set(students.map(s => s.class))].sort();
+            const classListEl = document.getElementById('class-list');
+            const classCheckboxes = document.getElementById('class-checkboxes');
+            
+            if (classes.length > 0) {
+                classListEl.innerHTML = classes.map(c => `<span class="badge bg-secondary me-1">${c}</span>`).join('');
+                
+                // Update checkboxes
+                classCheckboxes.innerHTML = classes.map(cls => `
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="selected_classes" value="${cls}" id="class_${cls}">
+                        <label class="form-check-label" for="class_${cls}">${cls}</label>
+                    </div>
+                `).join('');
+            } else {
+                classListEl.innerHTML = '<span class="text-muted">No classes available</span>';
+                classCheckboxes.innerHTML = '<div class="text-muted">No classes available. Please add students first.</div>';
+            }
+            
+            // Update student details
+            const studentDetails = document.getElementById('student-details');
+            if (students.length > 0) {
+                studentDetails.innerHTML = `
+                    <strong>Student Data Status:</strong>
+                    <div class="text-success">${students.length} students loaded from ${classes.length} classes</div>
+                `;
+            } else {
+                studentDetails.innerHTML = `
+                    <strong>Student Data Status:</strong>
+                    <div class="text-muted">No students loaded</div>
+                `;
+            }
+            
+            updateGenerateButton();
+        });
+    
+    fetch('{{ url_for("get_rooms_data") }}')
+        .then(response => response.json())
+        .then(rooms => {
+            document.getElementById('room-count').textContent = rooms.length;
+            
+            // Update room details
+            const roomDetails = document.getElementById('room-details');
+            if (rooms.length > 0) {
+                const totalCapacity = rooms.reduce((sum, room) => sum + room.capacity, 0);
+                roomDetails.innerHTML = `
+                    <strong>Room Configuration Status:</strong>
+                    <div class="text-success">${rooms.length} rooms configured (Total capacity: ${totalCapacity} students)</div>
+                `;
+            } else {
+                roomDetails.innerHTML = `
+                    <strong>Room Configuration Status:</strong>
+                    <div class="text-muted">No rooms configured</div>
+                `;
+            }
+            
+            updateGenerateButton();
+        });
+}
+
+function updateGenerateButton() {
+    const studentCount = parseInt(document.getElementById('student-count').textContent);
+    const roomCount = parseInt(document.getElementById('room-count').textContent);
+    const generateBtn = document.getElementById('generateBtn');
+    
+    if (studentCount > 0 && roomCount > 0) {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i class="bi bi-magic"></i> Generate Seating Plan';
+    } else {
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Need Students & Rooms';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateDataSummary();
+    
+    // Refresh data every 30 seconds
+    setInterval(updateDataSummary, 30000);
+    
+    // Handle mutually exclusive gender options
+    const boyGirlPairing = document.getElementById('boy_girl_pairing');
+    const genderSeparation = document.getElementById('gender_separation');
+    
+    if (boyGirlPairing && genderSeparation) {
+        boyGirlPairing.addEventListener('change', function() {
+            if (this.checked) {
+                genderSeparation.checked = false;
+            }
+        });
+        
+        genderSeparation.addEventListener('change', function() {
+            if (this.checked) {
+                boyGirlPairing.checked = false;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

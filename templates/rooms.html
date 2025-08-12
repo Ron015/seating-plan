@@ -1,0 +1,513 @@
+{% extends "base.html" %}
+
+{% block title %}Room Management - PM SHRI JNV GB NAGAR{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-building"></i> Room Management</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Rooms</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card gradient-card-primary">
+                <div class="card-body text-center text-white">
+                    <i class="bi bi-building fs-1"></i>
+                    <h3 id="total-rooms" class="mt-2">0</h3>
+                    <p class="mb-0">Total Rooms</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card gradient-card-success">
+                <div class="card-body text-center text-white">
+                    <i class="bi bi-grid-3x3 fs-1"></i>
+                    <h3 id="total-capacity" class="mt-2">0</h3>
+                    <p class="mb-0">Total Capacity</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card gradient-card-info">
+                <div class="card-body text-center text-white">
+                    <i class="bi bi-plus-square fs-1"></i>
+                    <h3 id="extra-desks" class="mt-2">0</h3>
+                    <p class="mb-0">Extra Desks</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card gradient-card-warning">
+                <div class="card-body text-center text-white">
+                    <i class="bi bi-calculator fs-1"></i>
+                    <h3 id="avg-capacity" class="mt-2">0</h3>
+                    <p class="mb-0">Avg Capacity</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Management -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-list"></i> Room Configuration</h5>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addRoomModal">
+                        <i class="bi bi-plus"></i> Add Room
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="roomsList">
+                        <div class="col-12 text-center text-muted">
+                            No rooms configured
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <!-- Room Templates -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-bookmark"></i> Quick Templates</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary" onclick="addTemplate('exam-hall-large')">
+                            <i class="bi bi-building-fill"></i> Large Exam Hall (10×8)
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="addTemplate('exam-hall-medium')">
+                            <i class="bi bi-building"></i> Medium Exam Hall (8×6)
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="addTemplate('classroom')">
+                            <i class="bi bi-door-open"></i> Classroom (6×5)
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="addTemplate('computer-lab')">
+                            <i class="bi bi-laptop"></i> Computer Lab (4×8)
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="addTemplate('library')">
+                            <i class="bi bi-book"></i> Library Hall (8×6)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulk Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-lightning"></i> Bulk Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('add_room_page') }}" class="btn btn-primary">
+                            <i class="bi bi-plus"></i> Add Room
+                        </a>
+                        <button class="btn btn-outline-success" onclick="loadJNVRooms()">
+                            <i class="bi bi-download"></i> Load JNV Default Rooms
+                        </button>
+                        <button class="btn btn-outline-info" onclick="exportRooms()">
+                            <i class="bi bi-upload"></i> Export Room Config
+                        </button>
+                        <form method="POST" action="{{ url_for('clear_data') }}">
+                            <input type="hidden" name="data_type" value="rooms">
+                            <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Clear all room configurations?')">
+                                <i class="bi bi-trash"></i> Clear All Rooms
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room Calculator -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-calculator"></i> Capacity Calculator</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label small">Rows</label>
+                            <input type="number" class="form-control form-control-sm" id="calcRows" value="8" min="1" max="20">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small">Columns</label>
+                            <input type="number" class="form-control form-control-sm" id="calcCols" value="6" min="1" max="20">
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <label class="form-label small">Extra Desks</label>
+                            <input type="number" class="form-control form-control-sm" id="calcExtra" value="0" min="0" max="50">
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3 p-2 small">
+                        <strong>Capacity:</strong> <span id="calcCapacity">96</span> students<br>
+                        <small class="text-muted">Base: <span id="calcBase">96</span> + Extra: <span id="calcExtraValue">0</span></small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Room Modal -->
+<div class="modal fade" id="addRoomModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Room</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addRoomForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="roomId" class="form-label">Room ID/Name</label>
+                            <input type="text" class="form-control" id="roomId" placeholder="e.g., EXAM-HALL-A" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="roomRows" class="form-label">Rows</label>
+                            <input type="number" class="form-control" id="roomRows" value="8" min="1" max="20" required>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="roomColumns" class="form-label">Columns</label>
+                            <input type="number" class="form-control" id="roomColumns" value="6" min="1" max="20" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="roomExtra" class="form-label">Extra Desks</label>
+                            <input type="number" class="form-control" id="roomExtra" value="0" min="0" max="50">
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">Calculated Capacity</label>
+                            <div class="form-control-plaintext">
+                                <strong id="modalCapacity">96</strong> students
+                                <small class="text-muted">(Base: <span id="modalBase">96</span> + Extra: <span id="modalExtraValue">0</span>)</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="roomDescription" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" id="roomDescription" rows="2" placeholder="Brief description of the room..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveRoomBtn">Save Room</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Room Modal -->
+<div class="modal fade" id="editRoomModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Room</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Similar form structure as add room modal -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="updateRoomBtn">Update Room</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let roomsData = [];
+
+// Room templates
+const roomTemplates = {
+    'exam-hall-large': { rows: 10, columns: 8, extra_desks: 0, id: 'EXAM-HALL-LARGE' },
+    'exam-hall-medium': { rows: 8, columns: 6, extra_desks: 2, id: 'EXAM-HALL-MEDIUM' },
+    'classroom': { rows: 6, columns: 5, extra_desks: 0, id: 'CLASSROOM' },
+    'computer-lab': { rows: 4, columns: 8, extra_desks: 0, id: 'COMPUTER-LAB' },
+    'library': { rows: 8, columns: 6, extra_desks: 4, id: 'LIBRARY-HALL' }
+};
+
+// Load rooms data
+function loadRoomsData() {
+    fetch('{{ url_for("get_rooms_data") }}')
+        .then(response => response.json())
+        .then(data => {
+            roomsData = data;
+            updateRoomStatistics();
+            updateRoomsList();
+        })
+        .catch(error => console.error('Error loading rooms:', error));
+}
+
+// Update room statistics
+function updateRoomStatistics() {
+    const totalRooms = roomsData.length;
+    const totalCapacity = roomsData.reduce((sum, room) => sum + room.capacity, 0);
+    const totalExtraDesks = roomsData.reduce((sum, room) => sum + (room.extra_desks || 0), 0);
+    const avgCapacity = totalRooms > 0 ? Math.round(totalCapacity / totalRooms) : 0;
+    
+    document.getElementById('total-rooms').textContent = totalRooms;
+    document.getElementById('total-capacity').textContent = totalCapacity;
+    document.getElementById('extra-desks').textContent = totalExtraDesks;
+    document.getElementById('avg-capacity').textContent = avgCapacity;
+}
+
+// Update rooms list
+function updateRoomsList() {
+    const roomsList = document.getElementById('roomsList');
+    
+    if (roomsData.length === 0) {
+        roomsList.innerHTML = '<div class="col-12 text-center text-muted">No rooms configured</div>';
+        return;
+    }
+    
+    roomsList.innerHTML = roomsData.map(room => `
+        <div class="col-lg-6 mb-3">
+            <div class="card room-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="card-title">
+                                <i class="bi bi-building text-primary"></i> ${room.room_id}
+                            </h6>
+                            <div class="small text-muted mb-2">
+                                <span class="badge bg-light text-dark">${room.rows}×${room.columns}</span>
+                                ${room.extra_desks > 0 ? `<span class="badge bg-info">+${room.extra_desks} extra</span>` : ''}
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-people text-success me-2"></i>
+                                <strong>${room.capacity} students</strong>
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('edit_room_page') }}?room_id=${encodeURIComponent(room.room_id)}">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a></li>
+                                <li><a class="dropdown-item" onclick="duplicateRoom('${room.room_id}')">
+                                    <i class="bi bi-copy"></i> Duplicate
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" onclick="deleteRoom('${room.room_id}')">
+                                    <i class="bi bi-trash"></i> Delete
+                                </a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Calculate capacity
+function calculateCapacity(rows, cols, extra) {
+    const base = rows * cols * 2; // 2 seats per desk
+    return base + (extra * 2);
+}
+
+// Update calculators
+function updateCapacityCalculator() {
+    const rows = parseInt(document.getElementById('calcRows').value) || 0;
+    const cols = parseInt(document.getElementById('calcCols').value) || 0;
+    const extra = parseInt(document.getElementById('calcExtra').value) || 0;
+    
+    const base = rows * cols * 2;
+    const total = base + (extra * 2);
+    
+    document.getElementById('calcBase').textContent = base;
+    document.getElementById('calcExtraValue').textContent = extra * 2;
+    document.getElementById('calcCapacity').textContent = total;
+}
+
+function updateModalCapacity() {
+    const rows = parseInt(document.getElementById('roomRows').value) || 0;
+    const cols = parseInt(document.getElementById('roomColumns').value) || 0;
+    const extra = parseInt(document.getElementById('roomExtra').value) || 0;
+    
+    const base = rows * cols * 2;
+    const total = base + (extra * 2);
+    
+    document.getElementById('modalBase').textContent = base;
+    document.getElementById('modalExtraValue').textContent = extra * 2;
+    document.getElementById('modalCapacity').textContent = total;
+}
+
+// Add room template
+function addTemplate(templateName) {
+    const template = roomTemplates[templateName];
+    if (!template) return;
+    
+    // Find unique room ID
+    let counter = 1;
+    let roomId = template.id;
+    while (roomsData.find(r => r.room_id === roomId)) {
+        roomId = `${template.id}-${counter}`;
+        counter++;
+    }
+    
+    // Fill modal with template data
+    document.getElementById('roomId').value = roomId;
+    document.getElementById('roomRows').value = template.rows;
+    document.getElementById('roomColumns').value = template.columns;
+    document.getElementById('roomExtra').value = template.extra_desks;
+    updateModalCapacity();
+    
+    // Show modal
+    new bootstrap.Modal(document.getElementById('addRoomModal')).show();
+}
+
+// Load JNV default rooms
+function loadJNVRooms() {
+    const defaultRooms = [
+        { room_id: 'EXAM-HALL-A', rows: 8, columns: 6, extra_desks: 4 },
+        { room_id: 'EXAM-HALL-B', rows: 6, columns: 8, extra_desks: 2 },
+        { room_id: 'LIBRARY-HALL', rows: 10, columns: 5, extra_desks: 0 },
+        { room_id: 'COMPUTER-LAB', rows: 4, columns: 8, extra_desks: 4 },
+        { room_id: 'MULTI-PURPOSE-HALL', rows: 12, columns: 8, extra_desks: 8 }
+    ];
+    
+    // Add rooms via API
+    defaultRooms.forEach(room => {
+        addRoomToServer(room);
+    });
+    
+    setTimeout(() => {
+        loadRoomsData();
+        alert('Default JNV rooms loaded successfully!');
+    }, 1000);
+}
+
+// Add room to server
+function addRoomToServer(roomData) {
+    const formData = new FormData();
+    formData.append('room_id', roomData.room_id);
+    formData.append('rows', roomData.rows);
+    formData.append('columns', roomData.columns);
+    formData.append('extra_desks', roomData.extra_desks || 0);
+    
+    fetch('{{ url_for("add_room") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadRoomsData();
+        }
+    })
+    .catch(error => console.error('Error adding room:', error));
+}
+
+// Event listeners
+document.getElementById('calcRows').addEventListener('input', updateCapacityCalculator);
+document.getElementById('calcCols').addEventListener('input', updateCapacityCalculator);
+document.getElementById('calcExtra').addEventListener('input', updateCapacityCalculator);
+
+document.getElementById('roomRows').addEventListener('input', updateModalCapacity);
+document.getElementById('roomColumns').addEventListener('input', updateModalCapacity);
+document.getElementById('roomExtra').addEventListener('input', updateModalCapacity);
+
+// Save room button
+document.getElementById('saveRoomBtn').addEventListener('click', function() {
+    const roomData = {
+        room_id: document.getElementById('roomId').value,
+        rows: parseInt(document.getElementById('roomRows').value),
+        columns: parseInt(document.getElementById('roomColumns').value),
+        extra_desks: parseInt(document.getElementById('roomExtra').value) || 0
+    };
+    
+    if (!roomData.room_id || !roomData.rows || !roomData.columns) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    addRoomToServer(roomData);
+    bootstrap.Modal.getInstance(document.getElementById('addRoomModal')).hide();
+});
+
+// Placeholder functions
+function editRoom(roomId) {
+    alert(`Edit room functionality: ${roomId}`);
+}
+
+function duplicateRoom(roomId) {
+    const room = roomsData.find(r => r.room_id === roomId);
+    if (room) {
+        let newId = `${roomId}-COPY`;
+        let counter = 1;
+        while (roomsData.find(r => r.room_id === newId)) {
+            newId = `${roomId}-COPY-${counter}`;
+            counter++;
+        }
+        
+        const duplicatedRoom = { ...room, room_id: newId };
+        addRoomToServer(duplicatedRoom);
+    }
+}
+
+function deleteRoom(roomId) {
+    if (confirm(`Are you sure you want to delete room: ${roomId}?\n\nThis action cannot be undone and will affect any existing seating arrangements.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("delete_room") }}';
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'room_id';
+        input.value = roomId;
+        
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function exportRooms() {
+    if (roomsData.length === 0) {
+        alert('No rooms to export');
+        return;
+    }
+    
+    const data = JSON.stringify(roomsData, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'room_configuration.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    loadRoomsData();
+    updateCapacityCalculator();
+    updateModalCapacity();
+    setInterval(loadRoomsData, 30000);
+});
+</script>
+{% endblock %}

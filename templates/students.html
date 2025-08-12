@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block title %}Student Management - PM SHRI JNV GB NAGAR{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-people"></i> Student Management</h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Students</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card gradient-card-primary">
+                <div class="card-body text-center text-white">
+                    <i class="bi bi-people fs-1"></i>
+                    <h3 id="total-students" class="mt-2">0</h3>
+                    <p class="mb-0">Total Students</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card gradient-card-info">
+                <div class="card-body text-center text-white">
+                    <i class="bi bi-bookmark fs-1"></i>
+                    <h3 id="total-classes" class="mt-2">0</h3>
+                    <p class="mb-0">Classes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card gradient-card-success">
+                <div class="card-body text-center text-white">
+                    <i class="bi bi-gender-male fs-1"></i>
+                    <h3 id="male-count" class="mt-2">0</h3>
+                    <p class="mb-0">Male Students</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card gradient-card-warning">
+                <div class="card-body text-center text-white">
+                    <i class="bi bi-gender-female fs-1"></i>
+                    <h3 id="female-count" class="mt-2">0</h3>
+                    <p class="mb-0">Female Students</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Data Management -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-table"></i> Student Records</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Search and Filter -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="searchStudents" placeholder="Search students by name or roll number...">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filterClass">
+                                <option value="">All Classes</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filterGender">
+                                <option value="">All Genders</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Student Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="studentsTable">
+                            <thead>
+                                <tr>
+                                    <th>Roll Number</th>
+                                    <th>Name</th>
+                                    <th>Class</th>
+                                    <th>Gender</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">No students loaded</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <nav aria-label="Students pagination">
+                        <ul class="pagination justify-content-center" id="studentsPagination">
+                            <!-- Pagination will be populated by JavaScript -->
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 mb-4">
+            <!-- Data Import/Export -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-cloud-upload"></i> Import Students</h6>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('upload_students') }}" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="studentFile" class="form-label">Excel File</label>
+                            <input class="form-control" type="file" id="studentFile" name="file" accept=".xlsx,.xls" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-upload"></i> Upload Students
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <form method="POST" action="{{ url_for('load_sample_data') }}">
+                            <button type="submit" class="btn btn-outline-success w-100">
+                                <i class="bi bi-database"></i> Load Sample Data
+                            </button>
+                        </form>
+                        <a href="{{ url_for('add_student_page') }}" class="btn btn-primary w-100">
+                            <i class="bi bi-plus"></i> Add Student
+                        </a>
+                        <form method="POST" action="{{ url_for('export_students') }}">
+                            <button type="submit" class="btn btn-outline-info w-100">
+                                <i class="bi bi-download"></i> Export Students
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ url_for('clear_data') }}">
+                            <input type="hidden" name="data_type" value="students">
+                            <button type="submit" class="btn btn-outline-danger w-100" onclick="return confirm('Clear all student data?')">
+                                <i class="bi bi-trash"></i> Clear All
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Class Summary -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-pie-chart"></i> Class Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <div id="classDistribution">
+                        <div class="text-muted">No data available</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Student Modal -->
+<div class="modal fade" id="addStudentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Student</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addStudentForm">
+                    <div class="mb-3">
+                        <label for="rollNumber" class="form-label">Roll Number</label>
+                        <input type="text" class="form-control" id="rollNumber" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="studentName" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="studentName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="studentClass" class="form-label">Class</label>
+                        <input type="text" class="form-control" id="studentClass" placeholder="e.g., 10A, 12B" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="studentGender" class="form-label">Gender</label>
+                        <select class="form-select" id="studentGender" required>
+                            <option value="">Select Gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveStudentBtn">Save Student</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let studentsData = [];
+let filteredStudents = [];
+let currentPage = 1;
+const studentsPerPage = 15;
+
+// Load students data
+function loadStudentsData() {
+    fetch('{{ url_for("get_student_data") }}')
+        .then(response => response.json())
+        .then(data => {
+            studentsData = data;
+            filteredStudents = data;
+            updateStatistics();
+            updateTable();
+            updateClassFilter();
+            updateClassDistribution();
+        })
+        .catch(error => console.error('Error loading students:', error));
+}
+
+// Update statistics cards
+function updateStatistics() {
+    const total = studentsData.length;
+    const classes = [...new Set(studentsData.map(s => s.class))].length;
+    const males = studentsData.filter(s => s.gender === 'male').length;
+    const females = studentsData.filter(s => s.gender === 'female').length;
+    
+    document.getElementById('total-students').textContent = total;
+    document.getElementById('total-classes').textContent = classes;
+    document.getElementById('male-count').textContent = males;
+    document.getElementById('female-count').textContent = females;
+}
+
+// Update students table
+function updateTable() {
+    const tbody = document.getElementById('studentsTableBody');
+    const start = (currentPage - 1) * studentsPerPage;
+    const end = start + studentsPerPage;
+    const pageStudents = filteredStudents.slice(start, end);
+    
+    if (pageStudents.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No students found</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = pageStudents.map(student => `
+        <tr>
+            <td><code>${student.roll_number || student['Roll Number'] || 'N/A'}</code></td>
+            <td>${student.name || student['Name'] || 'N/A'}</td>
+            <td><span class="badge bg-primary">${student.class || student['Class'] || 'N/A'}</span></td>
+            <td>
+                <span class="badge ${student.gender === 'male' ? 'bg-info' : 'bg-warning'}">
+                    ${(student.gender || student['Gender'] || 'N/A').charAt(0).toUpperCase() + (student.gender || student['Gender'] || '').slice(1)}
+                </span>
+            </td>
+            <td>
+                <a href="{{ url_for('edit_student_page') }}?roll_number=${encodeURIComponent(student.roll_number || student['Roll Number'])}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-pencil"></i> Edit
+                </a>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteStudent('${student.roll_number || student['Roll Number']}')">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+    
+    updatePagination();
+}
+
+// Update pagination
+function updatePagination() {
+    const totalPages = Math.ceil(filteredStudents.length / studentsPerPage);
+    const pagination = document.getElementById('studentsPagination');
+    
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+    }
+    
+    let paginationHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+        paginationHTML += `
+            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+            </li>
+        `;
+    }
+    
+    pagination.innerHTML = paginationHTML;
+}
+
+// Change page
+function changePage(page) {
+    currentPage = page;
+    updateTable();
+}
+
+// Update class filter dropdown
+function updateClassFilter() {
+    const filterClass = document.getElementById('filterClass');
+    const classes = [...new Set(studentsData.map(s => s.class || s['Class']))].sort();
+    
+    filterClass.innerHTML = '<option value="">All Classes</option>' +
+        classes.map(cls => `<option value="${cls}">${cls}</option>`).join('');
+}
+
+// Update class distribution
+function updateClassDistribution() {
+    const distribution = {};
+    studentsData.forEach(student => {
+        const cls = student.class || student['Class'] || 'Unknown';
+        distribution[cls] = (distribution[cls] || 0) + 1;
+    });
+    
+    const distributionDiv = document.getElementById('classDistribution');
+    if (Object.keys(distribution).length === 0) {
+        distributionDiv.innerHTML = '<div class="text-muted">No data available</div>';
+        return;
+    }
+    
+    distributionDiv.innerHTML = Object.entries(distribution)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([cls, count]) => `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge bg-primary">${cls}</span>
+                <span class="fw-bold">${count} students</span>
+            </div>
+        `).join('');
+}
+
+// Search and filter functionality
+function applyFilters() {
+    const searchTerm = document.getElementById('searchStudents').value.toLowerCase();
+    const classFilter = document.getElementById('filterClass').value;
+    const genderFilter = document.getElementById('filterGender').value;
+    
+    filteredStudents = studentsData.filter(student => {
+        const name = (student.name || student['Name'] || '').toLowerCase();
+        const rollNumber = (student.roll_number || student['Roll Number'] || '').toLowerCase();
+        const studentClass = student.class || student['Class'] || '';
+        const gender = student.gender || student['Gender'] || '';
+        
+        const matchesSearch = name.includes(searchTerm) || rollNumber.includes(searchTerm);
+        const matchesClass = !classFilter || studentClass === classFilter;
+        const matchesGender = !genderFilter || gender.toLowerCase() === genderFilter;
+        
+        return matchesSearch && matchesClass && matchesGender;
+    });
+    
+    currentPage = 1;
+    updateTable();
+}
+
+// Event listeners
+document.getElementById('searchStudents').addEventListener('input', applyFilters);
+document.getElementById('filterClass').addEventListener('change', applyFilters);
+document.getElementById('filterGender').addEventListener('change', applyFilters);
+
+// Placeholder functions for actions
+function editStudent(rollNumber) {
+    alert(`Edit student: ${rollNumber}`);
+}
+
+function deleteStudent(rollNumber) {
+    if (confirm(`Are you sure you want to delete student with roll number: ${rollNumber}?\n\nThis action cannot be undone.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("delete_student") }}';
+        
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'roll_number';
+        input.value = rollNumber;
+        
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    loadStudentsData();
+    setInterval(loadStudentsData, 30000); // Refresh every 30 seconds
+});
+</script>
+{% endblock %}
