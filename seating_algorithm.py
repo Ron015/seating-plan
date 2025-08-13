@@ -124,85 +124,89 @@ class SeatingAlgorithm:
                 return student
         return None
     
+    def _get_base_class(self, class_str: str) -> str:
+        """Remove section part, keep only base class number."""
+        return ''.join(filter(str.isdigit, class_str))
+
     def _can_place_student(self, student: Dict, desk: Dict, 
                          room_seating: Dict, seat_position: str, 
                          boy_girl_pairing: bool, gender_separation: bool) -> bool:
-        """
-        Check if a student can be placed without violating rules.
-        """
-        student_class = student['class']
+        student_class = self._get_base_class(student['class'])  # Base class only
         student_gender = student['gender']
-        
-        # Same desk check
+    
         other_seat = 'seat_a' if seat_position == 'seat_b' else 'seat_b'
         other_student = desk.get(other_seat)
+        
         if other_student:
-            if other_student['class'] == student_class:
+            other_class = self._get_base_class(other_student['class'])  # Base class only
+            
+            # ❌ If same base class (e.g., 10A & 10B both → 10)
+            if other_class == student_class:
                 return False
+            
             if gender_separation and other_student['gender'] != student_gender:
                 return False
             if boy_girl_pairing and other_student['gender'] == student_gender:
                 return False
-        
-        # Adjacent desk same class check
+    
         if self._has_same_class_adjacent(student_class, desk, room_seating):
             return False
-        
-        # Temporary place student for deeper check
-        original = desk[seat_position]
-        desk[seat_position] = student
-        violations = self._validate_partial(room_seating)
-        desk[seat_position] = original
-        
-        if violations:
-            return False
-        
+    
         return True
     
-
-    def _validate_partial(self, room_seating: Dict) -> bool:
-        """Check if current partial seating already violates same class rule."""
-        for desk_id, desk in room_seating.items():
-            seat_a = desk.get('seat_a')
-            seat_b = desk.get('seat_b')
-            if seat_a and seat_b and seat_a['class'] == seat_b['class']:
-                return True
-            # Adjacent check
-            for seat_pos in ['seat_a', 'seat_b']:
-                student = desk.get(seat_pos)
-                if student and self._has_same_class_adjacent(student['class'], desk, room_seating):
-                    return True
-        return False
-        
-    def _has_same_class_adjacent(self, student_class: str, target_desk: Dict, 
-                               room_seating: Dict) -> bool:
+    def _has_same_class_adjacent(self, student_class: str, target_desk: Dict, room_seating: Dict) -> bool:
         """
-        Check if any adjacent desk has a student from the same class.
+        Check if any directly adjacent desk (no diagonals) has a student from the same base class.
         """
         row = target_desk['row']
         col = target_desk['col']
-        
-        # Check all four adjacent positions
+    
         adjacent_positions = [
             (row - 1, col),  # Above
             (row + 1, col),  # Below
             (row, col - 1),  # Left
-            (row, col + 1),  # Right
+            (row, col + 1)   # Right
         ]
-        
+    
         for adj_row, adj_col in adjacent_positions:
             adj_desk_id = f"R{adj_row}C{adj_col}"
-            
             if adj_desk_id in room_seating:
                 adj_desk = room_seating[adj_desk_id]
-                
-                # Check both seats in adjacent desk
                 for seat in ['seat_a', 'seat_b']:
                     adj_student = adj_desk.get(seat)
-                    if adj_student and adj_student['class'] == student_class:
+                    if adj_student and self._get_base_class(adj_student['class']) == student_class:
                         return True
-        
+    
         return False
+
+    # def _has_same_class_adjacent(self, student_class: str, target_desk: Dict, room_seating: Dict) -> bool:
+        # """
+        # Check if any adjacent desk (including diagonals) has a student from the same base class.
+        # """
+        # row = target_desk['row']
+        # col = target_desk['col']
+    
+        # adjacent_positions = [
+            # (row - 1, col),     # Above
+            # (row + 1, col),     # Below
+            # (row, col - 1),     # Left
+            # (row, col + 1),     # Right
+            # (row - 1, col - 1), # Top-left diagonal
+            # (row - 1, col + 1), # Top-right diagonal
+            # (row + 1, col - 1), # Bottom-left diagonal
+            # (row + 1, col + 1)  # Bottom-right diagonal
+        # ]
+    
+        # for adj_row, adj_col in adjacent_positions:
+            # adj_desk_id = f"R{adj_row}C{adj_col}"
+            # if adj_desk_id in room_seating:
+                # adj_desk = room_seating[adj_desk_id]
+                # for seat in ['seat_a', 'seat_b']:
+                    # adj_student = adj_desk.get(seat)
+                    # if adj_student and self._get_base_class(adj_student['class']) == student_class:
+                        # return True
+    
+        # return False
     
     def validate_seating_plan(self, seating_plan: Dict) -> List[str]:
         """
