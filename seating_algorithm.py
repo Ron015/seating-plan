@@ -128,35 +128,52 @@ class SeatingAlgorithm:
                          room_seating: Dict, seat_position: str, 
                          boy_girl_pairing: bool, gender_separation: bool) -> bool:
         """
-        Check if a student can be placed at the given position without
-        violating anti-cheating rules.
+        Check if a student can be placed without violating rules.
         """
         student_class = student['class']
         student_gender = student['gender']
         
-        # Rule 1: Check same desk constraint
+        # Same desk check
         other_seat = 'seat_a' if seat_position == 'seat_b' else 'seat_b'
         other_student = desk.get(other_seat)
-        
         if other_student:
-            # Same class cannot sit on same desk
             if other_student['class'] == student_class:
                 return False
-            
-            # Gender separation constraint - prevents boys and girls sitting together
             if gender_separation and other_student['gender'] != student_gender:
                 return False
-            
-            # Boy-girl pairing constraint - requires boy-girl alternating
             if boy_girl_pairing and other_student['gender'] == student_gender:
                 return False
         
-        # Rule 2: Check adjacent desks constraint
+        # Adjacent desk same class check
         if self._has_same_class_adjacent(student_class, desk, room_seating):
+            return False
+        
+        # Temporary place student for deeper check
+        original = desk[seat_position]
+        desk[seat_position] = student
+        violations = self._validate_partial(room_seating)
+        desk[seat_position] = original
+        
+        if violations:
             return False
         
         return True
     
+
+    def _validate_partial(self, room_seating: Dict) -> bool:
+        """Check if current partial seating already violates same class rule."""
+        for desk_id, desk in room_seating.items():
+            seat_a = desk.get('seat_a')
+            seat_b = desk.get('seat_b')
+            if seat_a and seat_b and seat_a['class'] == seat_b['class']:
+                return True
+            # Adjacent check
+            for seat_pos in ['seat_a', 'seat_b']:
+                student = desk.get(seat_pos)
+                if student and self._has_same_class_adjacent(student['class'], desk, room_seating):
+                    return True
+        return False
+        
     def _has_same_class_adjacent(self, student_class: str, target_desk: Dict, 
                                room_seating: Dict) -> bool:
         """
