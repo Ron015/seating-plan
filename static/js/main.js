@@ -257,8 +257,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (previewPage && previewPage.textContent.includes("Seating Plan Preview")) {
         const printBtn = document.createElement('button');
         printBtn.className = 'btn btn-outline-secondary';
-        printBtn.innerHTML = '<i class="bi bi-printer"></i> Print';
-        printBtn.onclick = printSeatingPlan;
+        printBtn.innerHTML = '<i class="bi bi-download"> Export Zip';
+        printBtn.onclick = () => window.location.href = "/export_all_plans_zip";
         
         const buttonContainer = previewPage.nextElementSibling;
         if (buttonContainer && buttonContainer.querySelector('.btn')) {
